@@ -15,3 +15,4 @@ shorts/*/qa/
 shorts/*/*.jpg
 # Local secrets written by `elevenlabs onboard`
 /.env.local
+shorts/**/cap/

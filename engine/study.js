@@ -6,13 +6,14 @@ export async function runStudy(C) {
   const { THREE, Q, WW, HH, scene, renderer, camera, canvas, post, U, hemi, sun, SUNDIR, SR, OUTF, thua, ti, ex, ALL, base, face, place, idle, arm, leg, hips, headTurn, yawTo, Lw, dirW, LEFT, headC, look, resetScene, setLook, O, put, FY, Z, clamp, ease, eio, lerp, V, vl } = C;
   window.ready = false;
   const SET = Q.get('set') || 'office', HOME = SET === 'home', ZB = Z - 6, ZD = Z - 2.9;
-  const T = await (await fetch('./film/study_timing.json')).json(), LN = Object.fromEntries(T.lines.map(l => [l.id, l]));
+  const OUTRO = Q.has('outro');   // &outro=1: the brand end tag (dorm set only, film/study_outro_timing.json)
+  const T = await (await fetch(OUTRO ? './film/study_outro_timing.json' : './film/study_timing.json')).json(), LN = Object.fromEntries(T.lines.map(l => [l.id, l]));
   const norm = s => s.toLowerCase().replace(/[^a-z0-9']/g, '');
   const S = id => LN[id].start, E = id => LN[id].end;
   const wt = (id, w, n = 0) => { const ws = LN[id].words.filter(x => norm(x.w).startsWith(w)); return ws[n] ? ws[n].t : LN[id].start; };
   const talking = (id, t) => LN[id].words.some(w => t >= w.t && t < w.t + Math.max(0.09, (w.e - w.t) * 0.7));
-  const DUR = T.duration, B1 = Math.round((S('blank') - 0.2) * 30) / 30, B2 = Math.round((S('adeno') - 0.25) * 30) / 30;
-  window.SEGS = [[0, B1, 'home'], [B1, B2, 'office'], [B2, DUR, 'home']];
+  const DUR = T.duration, B1 = OUTRO ? 1e9 : Math.round((S('blank') - 0.2) * 30) / 30, B2 = OUTRO ? -9 : Math.round((S('adeno') - 0.25) * 30) / 30;
+  window.SEGS = OUTRO ? [[0, DUR, 'home']] : [[0, B1, 'home'], [B1, B2, 'office'], [B2, DUR, 'home']];
   const UP = V(0, 1, 0), PI = Math.PI;
   const tex = (w, h, draw) => { const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d'); draw(g, w, h); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; t.userData = { c, g, draw }; return t; };
   const std = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.6, metalness: 0, ...o });
@@ -43,7 +44,7 @@ export async function runStudy(C) {
 
   // ---------- sets ----------
   const DX = -5.6, DZ = ZB + 1.9, DY = FY + 0.66, LZ = DZ - 0.62;   // home desk (in front of the left window); Leo sits behind it facing +z
-  let clockT, clockM, bookG, flipP, pageT, mugs = [], lampL, hl, bedObj;
+  let clockT, clockM, bookG, flipP, pageT, mugs = [], lampL, hl, bedObj, ringG, ringL; const ringLeds = [];
   const RZ = [Z + 0.4, Z - 1.4, Z - 3.2], CX = [-0.85, 0.85];        // exam: 3 rows x 2 columns receding from the camera (9:16 frame)
   const XL = CX[1], ZL = RZ[0], LZX = ZL - 0.62;                     // Leo: front row, right
   const EXAM = [[ROOMIE, CX[0], RZ[0]], [ex[4], CX[0], RZ[1]], [extra[0], CX[1], RZ[1]], [ti, CX[0], RZ[2]], [extra[2], CX[1], RZ[2]]];
@@ -77,6 +78,11 @@ export async function runStudy(C) {
     for (const [i, [x, z, c]] of [[DX + 0.12, DZ + 0.2, '#ffffff'], [DX - 0.16, DZ + 0.24, '#e8442a'], [DX + 0.24, DZ + 0.05, '#3d7be0']].entries()) {
       const m = new THREE.Group(); m.position.set(x, DY, z); O.add(m); mesh(new THREE.CylinderGeometry(0.038, 0.034, 0.095, 20), std(c, { roughness: 0.35 }), V(0, 0.048, 0), m);
       const h = mesh(new THREE.TorusGeometry(0.024, 0.008, 8, 16), std(c, { roughness: 0.35 }), V(0.042, 0.05, 0), m); mesh(new THREE.CylinderGeometry(0.033, 0.033, 0.004, 20), std('#3a2213', { roughness: 0.2 }), V(0, 0.088, 0), m); m.rotation.y = 0.6 + i; mugs.push(m); }
+    if (OUTRO) {   // the smart ring: brushed dark titanium band, three sensor LEDs glowing on the inside
+      ringG = new THREE.Group(); ringG.position.set(DX + 0.0, DY + 0.056, DZ + 0.2); O.add(ringG);
+      const band = mesh(new THREE.TorusGeometry(0.048, 0.0075, 32, 128), new THREE.MeshStandardMaterial({ color: '#b8c0cb', metalness: 0.9, roughness: 0.28, envMapIntensity: 7 }), null, ringG); band.scale.set(1, 1, 2.6);
+      for (const a of [-0.32, 0, 0.32]) { const d = mesh(new THREE.SphereGeometry(0.0045, 10, 8), new THREE.MeshBasicMaterial({ color: new THREE.Color(0.5, 3.0, 2.2), toneMapped: false }), V(Math.sin(a) * 0.0398, -Math.cos(a) * 0.0398, 0), ringG); d.castShadow = false; ringLeds.push(d); }
+      ringL = new THREE.PointLight('#bfe8ff', 0, 1.6, 1.5); scene.add(ringL); }
     // "EXAM 9 AM" note on the wall between the windows
     const note = mesh(new THREE.PlaneGeometry(0.42, 0.42), new THREE.MeshStandardMaterial({ map: tex(256, 256, g => { g.fillStyle = '#ffe66b'; g.fillRect(0, 0, 256, 256); g.fillStyle = '#c8241c'; g.font = '78px Anton'; g.textAlign = 'center'; g.fillText('EXAM', 128, 105); g.fillText('9 AM!!', 128, 200); }), roughness: 0.9 }), V(-4.7, FY + 1.95, ZB + 0.17)); note.rotation.z = 0.06;
     // night: dark sky with moon in the windows, no sun shafts, ceiling strips off, a warm desk lamp
@@ -142,10 +148,10 @@ export async function runStudy(C) {
   const cross = (g, x, y, s = 1) => { g.strokeStyle = '#e8442a'; g.lineWidth = 16 * s; g.lineCap = 'round'; g.beginPath(); g.moveTo(x - 30 * s, y - 30 * s); g.lineTo(x + 30 * s, y + 30 * s); g.moveTo(x + 30 * s, y - 30 * s); g.lineTo(x - 30 * s, y + 30 * s); g.stroke(); };
   const arrow = (g, x0, x1, y, col = INK) => { g.strokeStyle = col; g.fillStyle = col; g.lineWidth = 12; g.beginPath(); g.moveTo(x0, y); g.lineTo(x1 - 30, y); g.stroke(); g.beginPath(); g.moveTo(x1, y); g.lineTo(x1 - 40, y - 26); g.lineTo(x1 - 40, y + 26); g.closePath(); g.fill(); };
   const clock12 = (h) => { const hh = Math.floor(h) % 24, ap = hh < 12 ? 'AM' : 'PM', d = hh % 12 || 12; return `${d}:00 ${ap}`; };
-  const PANELS = [['adeno', S('adeno') - 0.1, S('caffeine') - 0.2], ['caffeine', S('caffeine') - 0.2, S('alcohol') - 0.2], ['alcohol', S('alcohol') - 0.2, S('usb') - 0.2], ['usb', S('usb') - 0.2, S('nocopy') - 0.2], ['nocopy', S('nocopy') - 0.2, E('nocopy') + 0.3]];
+  const PANELS = OUTRO ? [['sleep', S('ring') + 0.25, S('cta') - 0.2]] : [['adeno', S('adeno') - 0.1, S('caffeine') - 0.2], ['caffeine', S('caffeine') - 0.2, S('alcohol') - 0.2], ['alcohol', S('alcohol') - 0.2, S('usb') - 0.2], ['usb', S('usb') - 0.2, S('nocopy') - 0.2], ['nocopy', S('nocopy') - 0.2, E('nocopy') + 0.3]];
   function panel(t) {
     const P = PANELS.find(([, a, b]) => t >= a && t < b); if (!P) return; const [kind, a, b] = P;
-    const first = kind === 'adeno', last = kind === 'nocopy', pop = first ? eio(clamp((t - a) / 0.25)) : 1, out_ = last ? 1 - eio(clamp((t - (b - 0.25)) / 0.25)) : 1, s = pop * out_;
+    const first = kind === 'adeno' || kind === 'sleep', last = kind === 'nocopy' || kind === 'sleep', pop = first ? eio(clamp((t - a) / 0.25)) : 1, out_ = last ? 1 - eio(clamp((t - (b - 0.25)) / 0.25)) : 1, s = pop * out_;
     const g = og; g.save(); g.scale(K, K); const [px, py, pw, ph] = PANEL; g.translate(px + pw / 2, py + ph / 2); g.scale(0.6 + 0.4 * s, 0.6 + 0.4 * s); g.globalAlpha = clamp(s * 1.5); g.translate(-pw / 2, -ph / 2);
     g.shadowColor = 'rgba(0,0,0,0.45)'; g.shadowBlur = 30; g.shadowOffsetY = 10; rr(g, 0, 0, pw, ph, 44); g.fillStyle = INK; g.fill(); g.shadowColor = 'transparent';
     rr(g, 9, 9, pw - 18, ph - 18, 36); g.fillStyle = '#fff8ec'; g.fill(); g.save(); rr(g, 9, 9, pw - 18, ph - 18, 36); g.clip();
@@ -209,8 +215,35 @@ export async function runStudy(C) {
           if (bo < 0) file(g, bx, by, 0.85, 0, '#ffe66b'); else { file(g, sx + 100 + bo * 260, by + bo * bo * 900, 0.85, bo * 5, '#ffe66b'); if (bo < 0.35) cross(g, sx + 120, y - 130, 0.6); } }
         txt(g, 'FULL', sx - 10, y + 13, 34, '#ffffff'); }
     }
+    if (kind === 'sleep') {   // a sleep-tracker readout (illustrative app screen)
+      const k = eio(clamp((t - a - 0.15) / 1.6)), mins = Math.round(252 * k);
+      g.strokeStyle = TEAL; g.lineWidth = 10; g.beginPath(); g.ellipse(92, 92, 34, 26, 0, 0, 7); g.stroke();
+      txt(g, 'LAST NIGHT', 150, 108, 46, '#7a6a60', 'Anton', 'left');
+      txt(g, `${Math.floor(mins / 60)}h ${String(mins % 60).padStart(2, '0')}m`, 60, 270, 150, '#c8241c', 'Anton', 'left');
+      txt(g, 'of sleep', 520, 258, 40, INK, 'InterB', 'left'); txt(g, 'adults need 7–9 h', 520, 302, 30, '#7a6a60', 'InterB', 'left');
+      const x0 = 60, x1 = pw - 60, y0 = 360, H = 150, segs = [[0, 0.08, 1], [0.08, 0.3, 3], [0.3, 0.42, 2], [0.42, 0.62, 1], [0.62, 0.78, 3], [0.78, 0.9, 2], [0.9, 1, 1]];
+      const col = ['', '#9fc7f0', '#7b4fd6', '#1d3c8f'], lvl = ['', 0.25, 0.55, 1.0];
+      g.fillStyle = '#efe6d6'; rr(g, x0 - 10, y0 - 10, x1 - x0 + 20, H + 20, 18); g.fill();
+      for (const [s0, s1, st] of segs) { if (s0 > k) continue; const e = Math.min(s1, k), h = H * lvl[st]; g.fillStyle = col[st]; rr(g, x0 + (x1 - x0) * s0, y0 + H - h, (x1 - x0) * (e - s0) - 4, h, 8); g.fill(); }
+      txt(g, '2:00 AM', x0, y0 + H + 48, 30, '#7a6a60', 'InterB', 'left'); txt(g, '6:12 AM', x1, y0 + H + 48, 30, '#7a6a60', 'InterB', 'right');
+      [['deep', 3], ['REM', 2], ['light', 1]].forEach(([n, st], i) => { const lx = 300 + i * 150; g.fillStyle = col[st]; rr(g, lx, y0 + H + 26, 26, 26, 6); g.fill(); txt(g, n, lx + 36, y0 + H + 48, 28, INK, 'InterB', 'left'); });
+    }
     g.restore(); g.restore();
   }
+  // brand end card (outro): fades in over the ring shot
+  const TEAL = '#2fb3a6';
+  function endCard(t) {
+    const t0 = S('cta') - 0.3, k = eio(clamp((t - t0) / 0.35)); if (k <= 0) return; const g = og; g.save(); g.scale(K, K); g.globalAlpha = k;
+    const gr = g.createLinearGradient(0, 0, 0, 1920); gr.addColorStop(0, '#06141f'); gr.addColorStop(1, '#0d3a47'); g.fillStyle = gr; g.fillRect(0, 0, 1080, 1920);
+    for (let i = 0; i < 5; i++) { g.strokeStyle = `rgba(47,179,166,${0.08 + i * 0.05})`; g.lineWidth = 6; g.beginPath(); for (let x = 0; x <= 1080; x += 12) g.lineTo(x, 1420 + i * 70 + Math.sin(x / 140 + t * 1.6 + i) * 22); g.stroke(); }   // the tide
+    const cy = 620, ps = 1 + 0.04 * Math.sin(t * 4); g.shadowColor = TEAL; g.shadowBlur = 50; g.strokeStyle = '#d7e3e6'; g.lineWidth = 34; g.beginPath(); g.ellipse(540, cy, 120 * ps, 120 * ps, 0, 0, 7); g.stroke();
+    g.shadowBlur = 24; g.fillStyle = '#7dffd9'; for (const a of [-0.35, 0, 0.35]) { g.beginPath(); g.arc(540 + Math.sin(a) * 96, cy + Math.cos(a) * 96, 9, 0, 7); g.fill(); } g.shadowBlur = 0;
+    g.font = '230px Anton'; g.textAlign = 'center'; g.fillStyle = '#f3f7f7'; if ('letterSpacing' in g) g.letterSpacing = '24px'; g.fillText('TIDE', 552, 1000); if ('letterSpacing' in g) g.letterSpacing = '10px';
+    txt(g, 'SMART RINGS', 545, 1068, 46, TEAL); if ('letterSpacing' in g) g.letterSpacing = '0px';
+    txt(g, 'Know how much you really sleep.', 540, 1160, 48, '#c9d8dc', 'InterB');
+    const pk = eio(clamp((t - wt('cta', 'try')) / 0.25)), sc = 0.85 + 0.15 * pk + 0.03 * Math.sin(t * 5) * pk; g.save(); g.translate(540, 1300); g.scale(sc, sc); g.globalAlpha = k * pk;
+    rr(g, -260, -62, 520, 124, 62); g.fillStyle = '#f3f7f7'; g.fill(); txt(g, 'Try Tide today', 0, 22, 62, '#06141f'); g.restore();
+    g.restore(); }
   // big flash between the exam and the science (white) and caption-safe vignette
   const flash = (t) => { const k = Math.max(clamp((t - (B2 - 0.35)) / 0.35) * (t < B2 ? 1 : 0), t >= B2 ? 1 - clamp((t - B2) / 0.4) : 0); if (k > 0) { og.fillStyle = `rgba(255,250,240,${k})`; og.fillRect(0, 0, WW, HH); } };
 
@@ -235,7 +268,17 @@ export async function runStudy(C) {
   const roomieAt = V(-3.25, 0, -23.0);
   const roomie = (t, mood) => { place(ROOMIE, roomieAt.x, roomieAt.z, yawTo(roomieAt.x, roomieAt.z, DX, LZ), FY); idle(ROOMIE, t); armsCrossed(ROOMIE); face(ROOMIE, mood); };
 
-  if (HOME) {
+  if (OUTRO) {
+    const tr = S('ring') - 0.1;
+    // 1 — "Don't want to end up like Leo?": Leo asleep face-down on the book at 2:00, Z bubbles, slow push
+    shot(0, t => { leoDesk(t, { mood: 'sleepy', lean: 0.68, pitch: 0.75 }); mugs.forEach(m => (m.visible = false)); const u = eio(clamp(t / tr));
+      look(V(DX + lerp(1.15, 0.9, u), FY + lerp(2.1, 1.85, u), LZ + lerp(2.3, 1.9, u)), V(DX, FY + 0.85, LZ + 0.3), 40); dof(2.6, 0.01);
+      const h = LH(); bubble(0, 'Z', '#3d7be0', h.clone().add(V(0.25, 0.35, 0)), 0.3, t, 0.22); bubble(1, 'Z', '#3d7be0', h.clone().add(V(0.42, 0.6, 0)), 0.8, t, 0.17); });
+    // 2 — the ring on the desk: slow orbit, LEDs pulse, Leo asleep in soft focus behind; the sleep panel up top
+    shot(tr, t => { leoDesk(t, { mood: 'sleepy', lean: 0.68, pitch: 0.75 }); mugs.forEach(m => (m.visible = false)); const u = eio(clamp((t - tr) / (DUR - tr))), R = ringG.position;
+      const an = lerp(-0.55, 0.15, u), d = lerp(0.72, 0.6, u); look(R.clone().add(V(Math.sin(an) * d, 0.2 + 0.03 * u, Math.cos(an) * d)), R.clone().add(V(0, 0.13, 0)), 34); dof(d, 0.02);
+      ringL.intensity = 4; ringL.position.copy(R).add(V(0.25, 0.3, 0.35)); });
+  } else if (HOME) {
     const T1 = 2.3, Tn = wt('hook', 'remembered');
     // 1 — ECU on the clock "2:00", pull back and rise to Leo reading (focus racks clock → Leo)
     const hook1 = (t, u) => { leoDesk(t, { mood: 'sleepy' }); mugsOn(t, 1e9); const ck = clockM.getWorldPosition(V(0, 0, 0)), h = LH();
@@ -321,13 +364,14 @@ export async function runStudy(C) {
   function frame(t) {
     resetScene(); light(); sprites.forEach(s => (s.visible = false)); OUTF.forEach(c => (c.root.visible = false)); ex.forEach(c => (c.root.visible = false)); dofD = 0;
     if (HOME) { mugs.forEach(m => (m.visible = true)); clockT.userData.set('2:00'); }
+    if (ringG) { ringG.rotation.y = 0.5 + t * 0.35; ringLeds.forEach((d, i) => d.scale.setScalar(0.8 + 0.35 * Math.max(0, Math.sin(t * 5 - i * 0.7)))); ringL.intensity = 0; }
     let i = 0; for (let k = 0; k < SHOTS.length; k++) if (t >= SHOTS[k].t0) i = k; SHOTS[i].fn(t);
     ALL.forEach(c => SR.updateLimbs(c));
     if (hl && LEO.root.visible) { hl.visible = true; const hp = SR.wp(LEO.bone('RightHand')); hl.position.copy(hp).add(V(0, 0.05, 0.02)); hl.rotation.set(0.5, 0, 0.4); }
     post.bokeh.enabled = dofD > 0; if (dofD > 0) { post.bokeh.uniforms.focus.value = dofD; post.bokeh.uniforms.aperture.value = dofA; }
     const f = HOME ? V(DX, 1, DZ) : V(0, 1, ZD + 1); sun.target.position.copy(f); sun.position.copy(f).addScaledVector(SUNDIR, 60); const sc = sun.shadow.camera; sc.left = sc.bottom = -9; sc.right = sc.top = 9; sc.near = 1; sc.far = 140; sc.updateProjectionMatrix();
     U.uTime.value = t; post.render();
-    og.clearRect(0, 0, WW, HH); og.drawImage(canvas, 0, 0); if (HOME) panel(t); flash(t);
+    og.clearRect(0, 0, WW, HH); og.drawImage(canvas, 0, 0); if (HOME) panel(t); flash(t); if (OUTRO) endCard(t);
     return out.toDataURL('image/jpeg', 0.92);
   }
   // speed knobs for software rendering: &noao=1 drops the n8ao pass, &aohalf=1 runs it at half resolution, &shadow=1024

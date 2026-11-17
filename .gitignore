@@ -13,3 +13,5 @@ shorts/*/*.png
 shorts/*/*.mp4
 shorts/*/qa/
 shorts/*/*.jpg
+# Local secrets written by `elevenlabs onboard`
+/.env.local

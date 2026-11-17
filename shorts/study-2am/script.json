@@ -1,19 +1,93 @@
 {
  "title": "What happens to your brain when you study until 2 AM",
- "voices": { "n": "en_US-ryan-high", "leo": "en_US-joe-medium", "roomie": "en_US-amy-medium" },
+ "voices": {
+  "n": "en_US-ryan-high",
+  "leo": "en_US-joe-medium",
+  "roomie": "en_US-amy-medium"
+ },
  "lines": [
-  { "id": "hook",     "who": "n",      "vo": "At 2 AM, Leo read the same page for the ninth time, and remembered none of it.", "shot": "Leo at his desk under the lamp, eyes drooping, flips back a page" },
-  { "id": "context",  "who": "n",      "vo": "Exam at nine. His plan: skip sleep, cram everything.", "shot": "wall clock 2:00, stack of books, highlighter" },
-  { "id": "mock",     "who": "roomie", "vo": "Dude. You've highlighted the whole book.", "shot": "roommate in the doorway, smug" },
-  { "id": "reply",    "who": "leo",    "vo": "Sleep is for people who already know this.", "shot": "Leo, serious, close" },
-  { "id": "coffee",   "who": "n",      "vo": "Three coffees later, he felt unstoppable.", "shot": "three mugs, Leo wide-eyed" },
-  { "id": "blank",    "who": "n",      "vo": "Then, at nine: question one. Total blank.", "shot": "exam room, Leo stares at the paper, dolly zoom" },
-  { "id": "turn",     "who": "n",      "vo": "Here's what was happening inside his brain.", "shot": "push into Leo's head" },
-  { "id": "adeno",    "who": "n",      "vo": "While you're awake, a chemical called adenosine piles up. That's what makes you sleepy.", "shot": "brain panel filling with dots, Leo yawns" },
-  { "id": "caffeine", "who": "n",      "vo": "Coffee doesn't clear it. It just blocks the sensors, until it wears off and the crash hits.", "shot": "coffee blocks the receptors; Leo's head drops" },
-  { "id": "alcohol",  "who": "n",      "vo": "Up since 7 AM? By 2 AM that's 19 hours awake, and your brain performs like it's had a couple of drinks.", "shot": "clock spin, card 19 h awake = 0.05% BAC" },
-  { "id": "usb",      "who": "n",      "vo": "And your hippocampus holds the day's facts like a USB stick. Deep sleep copies them to the hard drive.", "shot": "USB to hard drive panel" },
-  { "id": "nocopy",   "who": "n",      "vo": "No sleep, no copy. And a full stick can't save anything new.", "shot": "files bounce off the full stick" },
-  { "id": "loop",     "who": "n",      "vo": "Leo found that out the hard way, because", "shot": "back at the desk, 2:00, loop" }
- ]
+  {
+   "id": "hook",
+   "who": "n",
+   "vo": "At 2 AM, Leo read the same page for the ninth time, and remembered none of it.",
+   "shot": "Leo at his desk under the lamp, eyes drooping, flips back a page"
+  },
+  {
+   "id": "context",
+   "who": "n",
+   "vo": "Exam at nine. His plan: skip sleep, cram everything.",
+   "shot": "wall clock 2:00, stack of books, highlighter"
+  },
+  {
+   "id": "mock",
+   "who": "roomie",
+   "vo": "Dude. You've highlighted the whole book.",
+   "shot": "roommate in the doorway, smug"
+  },
+  {
+   "id": "reply",
+   "who": "leo",
+   "vo": "Sleep is for people who already know this.",
+   "shot": "Leo, serious, close"
+  },
+  {
+   "id": "coffee",
+   "who": "n",
+   "vo": "Three coffees later, he felt unstoppable.",
+   "shot": "three mugs, Leo wide-eyed"
+  },
+  {
+   "id": "blank",
+   "who": "n",
+   "vo": "Then, at nine: question one. Total blank.",
+   "shot": "exam room, Leo stares at the paper, dolly zoom"
+  },
+  {
+   "id": "turn",
+   "who": "n",
+   "vo": "Here's what was happening inside his brain.",
+   "shot": "push into Leo's head"
+  },
+  {
+   "id": "adeno",
+   "who": "n",
+   "vo": "While you're awake, a chemical called adenosine piles up. That's what makes you sleepy.",
+   "shot": "brain panel filling with dots, Leo yawns"
+  },
+  {
+   "id": "caffeine",
+   "who": "n",
+   "vo": "Coffee doesn't clear it. It just blocks the sensors, until it wears off and the crash hits.",
+   "shot": "coffee blocks the receptors; Leo's head drops"
+  },
+  {
+   "id": "alcohol",
+   "who": "n",
+   "vo": "Up since 7 AM? By 2 AM that's 19 hours awake, and your brain performs like it's had a couple of drinks.",
+   "shot": "clock spin, card 19 h awake = 0.05% BAC"
+  },
+  {
+   "id": "usb",
+   "who": "n",
+   "vo": "And your hippocampus holds the day's facts like a USB stick. Deep sleep copies them to the hard drive.",
+   "shot": "USB to hard drive panel"
+  },
+  {
+   "id": "nocopy",
+   "who": "n",
+   "vo": "No sleep, no copy. And a full stick can't save anything new.",
+   "shot": "files bounce off the full stick"
+  },
+  {
+   "id": "loop",
+   "who": "n",
+   "vo": "Leo found that out the hard way, because",
+   "shot": "back at the desk, 2:00, loop"
+  }
+ ],
+ "eleven": {
+  "n": "nPczCjzI2devNBz1zQrb",
+  "leo": "TX3LPaxmHKxFdv7VOQHJ",
+  "roomie": "FGY2WhTYpPnrIDTdsKH5"
+ }
 }

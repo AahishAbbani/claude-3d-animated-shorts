@@ -10,7 +10,8 @@ cards = json.load(open('cards.json')) if os.path.exists('cards.json') else []
 at = {l['id']: l['start'] for l in L}
 def tm(v, plus=0): return (DUR if v == 'end' else at[v] if isinstance(v, str) else float(v)) + (plus or 0)
 rgb = lambda c: tuple(int(c.lstrip('#')[i:i + 2], 16) for i in (0, 2, 4)) if isinstance(c, str) else tuple(c)
-words = [w for l in L for w in l['words']]
+skip = L[-1]['id'] if any(c.get('from') == L[-1]['id'] for c in cards) else None   # the follow/CTA line keeps only its card
+words = [w for l in L if l['id'] != skip for w in l['words']]
 items = []
 for i, w in enumerate(words):
     t0 = w['t']; t1 = min(words[i + 1]['t'] if i + 1 < len(words) else t0 + 0.8, t0 + 1.2)

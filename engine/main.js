@@ -87,6 +87,11 @@ const FACES = {
   palet: g => { ringEyes(g, 18); brows(g, -0.55, -152, 32); mOpen(g, 55, 80, 190, false); sweat(g); },
   squint: g => { cheeks(g, 0.2); g.strokeStyle = IK; g.lineWidth = 30; for (const sd of [-1, 1]) { g.beginPath(); g.moveTo(sd * EX - 55, 6); g.lineTo(sd * EX + 55, 0); g.stroke(); } brows(g, 0.4, -70); nose(g); mFrown(g); },
   grin: g => { cheeks(g, 0.4); dots(g); brows(g, -0.2, -125); nose(g); mSmile(g, 85, 190, 0.6); },
+  sleepy: g => { for (const sd of [-1, 1]) { g.save(); g.beginPath(); g.rect(sd * EX - 60, -58, 120, 100); g.clip(); g.fillStyle = IK; g.beginPath(); g.ellipse(sd * EX + 3, -64, 27, 30, 0, 0, 7); g.fill(); g.restore();
+    g.strokeStyle = IK; g.lineWidth = 16; g.beginPath(); g.moveTo(sd * EX - 40, -58); g.quadraticCurveTo(sd * EX, -52, sd * EX + 40, -58); g.stroke(); } brows(g, -0.1, -150, 30); mFrownS(g); },   // lids dropped to half
+  yawn: g => { g.strokeStyle = IK; g.lineWidth = 16; g.lineCap = 'round'; for (const sd of [-1, 1]) { g.beginPath(); g.moveTo(sd * EX - 34, -60); g.quadraticCurveTo(sd * EX, -42, sd * EX + 34, -60); g.stroke(); } brows(g, -0.4, -150, 30); g.fillStyle = '#5c1212'; g.beginPath(); g.ellipse(0, 150, 44, 74, 0, 0, 7); g.fill(); g.lineWidth = 14; g.stroke(); },
+  dizzy: g => { g.strokeStyle = IK; g.lineWidth = 12; g.lineCap = 'round'; for (const sd of [-1, 1]) { g.beginPath(); for (let a = 0; a < 14; a += 0.3) { const r = 4 + a * 3.2; g.lineTo(sd * EX + Math.cos(a * sd) * r, -40 + Math.sin(a * sd) * r); } g.stroke(); } mWavy(g, 140); },
+  blank: g => { for (const sd of [-1, 1]) { g.fillStyle = IK; g.beginPath(); g.arc(sd * EX, -40, 11, 0, 7); g.fill(); } g.strokeStyle = IK; g.lineWidth = 15; g.beginPath(); g.moveTo(-22, 104); g.lineTo(24, 104); g.stroke(); },   // pin-dot eyes, flat line
 };
 const moust = g => { g.fillStyle = IK; g.beginPath(); g.moveTo(-10, 150); g.quadraticCurveTo(-90, 140, -130, 215); g.quadraticCurveTo(-80, 175, -10, 182); g.closePath(); g.fill(); g.beginPath(); g.moveTo(10, 150); g.quadraticCurveTo(90, 140, 130, 215); g.quadraticCurveTo(80, 175, 10, 182); g.closePath(); g.fill();
   g.strokeStyle = '#d8d0c4'; g.lineWidth = 26; g.beginPath(); g.moveTo(-40, 300); g.quadraticCurveTo(0, 360, 40, 300); g.stroke(); g.strokeStyle = IK; g.lineWidth = 10; g.beginPath(); g.moveTo(-58, 296); g.quadraticCurveTo(0, 385, 58, 296); g.stroke(); };
@@ -571,7 +576,7 @@ window.DUR = Math.min(DUR, +(Q.get('dur') || 1e9)); window.frame = render; windo
 // ---------- character review page (owner 2026-11-10: "tạo 1 trang chỉ để mình duyệt nhân vật, cho phép xoay, zoom… góp ý trên đó") ----------
 // index.html?viewer=1 → live orbit view of the real cast (same rig/faces/colours as the film), mood + pose pickers, OK/Cần sửa notes
 // to the LAN feedback api (POST /api/feedback/nhan-vat-3d when served by lan-share).
-if (Q.has('viewer')) { if (Q.has('skit')) window.ready = false;   // the skit waits for the furniture before render.cjs starts
+if (Q.has('viewer')) { if (Q.has('skit') || Q.has('study')) window.ready = false;   // the skit waits for the furniture before render.cjs starts
   const { OrbitControls } = await import('three/addons/controls/OrbitControls.js');
   const NAMES = ['Áo hoodie', 'Áo vest', 'Áo polo', 'Thừa', 'Trưởng đoàn', 'Tí', ...ex.map((_, i) => `Người trong đoàn ${i + 1}`)];
   // outfit tests: hoodie / vest / polo on Thừa's body (owner 2026-11-10)
@@ -582,7 +587,7 @@ if (Q.has('viewer')) { if (Q.has('skit')) window.ready = false;   // the skit wa
   const CAST = [...OUTF, thua, chief, ti, ...ex], Z = -20, X0 = -((CAST.length - 1) * 1.05) / 2;
   const POS = CAST.map((c, i) => V(X0 + i * 1.05, 0, Q.get('set') !== 'track' ? Z + 2.4 : Z));   // office/home: people stand in front of the furniture
   // office set (owner 2026-11-10: "đổi khung cảnh về văn phòng đi"): hide the outdoor world, build a bright cartoon office around the lineup
-  const OFFICE = Q.get('set') !== 'track', FY = 0.4; let OFF_O = null;
+  const OFFICE = Q.get('set') !== 'track', FY = 0.4; let OFF_O = null, PUT = null;
   if (OFFICE) { const keep = new Set([hemi, sun, sun.target]); ALL.forEach(c => { keep.add(c.root); c.dyn?.forEach(d => d.mesh?.parent && keep.add(d.mesh.parent)); });
     scene.children.forEach(o => { if (!keep.has(o)) o.visible = false; }); scene.fog.near = 400; scene.fog.far = 4000;
     const O = new THREE.Group(); scene.add(O); OFF_O = O; const tm = c => new THREE.MeshStandardMaterial({ color: c, roughness: 0.75, metalness: 0 });   // real shading for the set (owner 2026-11-10: "màu sắc chẳng chân thật")
@@ -595,7 +600,7 @@ if (Q.has('viewer')) { if (Q.has('skit')) window.ready = false;   // the skit wa
     ob(W0, 4.2, 0.2, '#5f9a8c', 0, FY + 2.1, ZB); for (const sx of [-1, 1]) ob(0.2, 4.2, ZF - ZB, '#c9a77c', sx * W0 / 2, FY + 2.1, (ZB + ZF) / 2);   // deeper teal + tan walls
     ob(W0, 0.1, ZF - ZB, '#fbf8f2', 0, FY + 4.25, (ZB + ZF) / 2); scene.background = new THREE.Color('#f3e9d6');   // ceiling, no black above the walls
     ob(W0, 0.18, 0.06, '#8a6a4a', 0, FY + 0.09, ZB + 0.12);
-    for (const x of [-5, 0, 5]) ob(2.6, 0.06, 0.4, '#ffffff', x, FY + 4.15, Z - 1, { mat: new THREE.MeshBasicMaterial({ color: new THREE.Color(1.6, 1.6, 1.5) }) });
+    for (const x of [-5, 0, 5]) ob(2.6, 0.06, 0.4, '#ffffff', x, FY + 4.15, Z - 1, { mat: new THREE.MeshBasicMaterial({ color: new THREE.Color(1.6, 1.6, 1.5) }) }).userData.strip = true;
     // windows with sky + city, whiteboard, wall clock, poster
     const gradT = (() => { const c = document.createElement('canvas'); c.width = 4; c.height = 256; const g = c.getContext('2d'); const gr = g.createLinearGradient(0, 0, 0, 256); gr.addColorStop(0, 'rgba(255,236,200,0.55)'); gr.addColorStop(0.6, 'rgba(255,226,180,0.22)'); gr.addColorStop(1, 'rgba(255,220,170,0)'); g.fillStyle = gr; g.fillRect(0, 0, 4, 256); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; })();
     const shaftM = new THREE.MeshBasicMaterial({ map: gradT, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false });
@@ -606,20 +611,20 @@ if (Q.has('viewer')) { if (Q.has('skit')) window.ready = false;   // the skit wa
       for (const [a, b] of [[yT, 0], [yB, 1]]) {}
       const v = [x - 1.15, yT, zW, x + 1.15, yT, zW, x + 1.5, FY + 0.02, zF, x - 1.5, FY + 0.02, zF, x - 1.15, yB, zW, x + 1.15, yB, zW, x + 1.5, FY + 0.02, zF - 2.6, x - 1.5, FY + 0.02, zF - 2.6];
       g.setAttribute('position', new THREE.Float32BufferAttribute(v, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute([0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0], 2)); g.setIndex([0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7, 0, 4, 7, 0, 7, 3, 1, 5, 6, 1, 6, 2]);
-      const sh = new THREE.Mesh(g, shaftM); sh.renderOrder = 5; O.add(sh);
-      const pt = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 3.0), new THREE.MeshBasicMaterial({ map: patchT, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false })); pt.rotation.x = -Math.PI / 2; pt.position.set(x, FY + 0.012, zF - 1.4); O.add(pt);
-      ob(2.4, 1.8, 0.05, '#ffffff', x, FY + 2.3, ZB + 0.12, { mat: new THREE.MeshBasicMaterial({ color: new THREE.Color(0.55, 0.75, 0.95) }) }); ob(2.6, 0.1, 0.12, '#f7f5f0', x, FY + 3.25, ZB + 0.15); ob(2.6, 0.1, 0.12, '#f7f5f0', x, FY + 1.35, ZB + 0.15); ob(0.08, 1.9, 0.12, '#f7f5f0', x, FY + 2.3, ZB + 0.15);
-      for (let k = 0; k < 4; k++) ob(0.35, 0.4 + (k * 37 % 5) * 0.12, 0.03, '#7da7c9', x - 0.9 + k * 0.6, FY + 1.6 + (0.2 + (k * 37 % 5) * 0.06), ZB + 0.14, { mat: new THREE.MeshBasicMaterial({ color: '#7da7c9' }) }); }
+      const sh = new THREE.Mesh(g, shaftM); sh.renderOrder = 5; sh.userData.shaft = true; O.add(sh);
+      const pt = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 3.0), new THREE.MeshBasicMaterial({ map: patchT, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false })); pt.rotation.x = -Math.PI / 2; pt.position.set(x, FY + 0.012, zF - 1.4); pt.userData.shaft = true; O.add(pt);
+      ob(2.4, 1.8, 0.05, '#ffffff', x, FY + 2.3, ZB + 0.12, { mat: new THREE.MeshBasicMaterial({ color: new THREE.Color(0.55, 0.75, 0.95) }) }).userData.win = true; ob(2.6, 0.1, 0.12, '#f7f5f0', x, FY + 3.25, ZB + 0.15); ob(2.6, 0.1, 0.12, '#f7f5f0', x, FY + 1.35, ZB + 0.15); ob(0.08, 1.9, 0.12, '#f7f5f0', x, FY + 2.3, ZB + 0.15);
+      for (let k = 0; k < 4; k++) ob(0.35, 0.4 + (k * 37 % 5) * 0.12, 0.03, '#7da7c9', x - 0.9 + k * 0.6, FY + 1.6 + (0.2 + (k * 37 % 5) * 0.06), ZB + 0.14, { mat: new THREE.MeshBasicMaterial({ color: '#7da7c9' }) }).userData.city = true; }
     if ((Q.get('set') || 'office') === 'office') ob(3.4, 1.6, 0.06, '#ffffff', 2.2, FY + 2.4, ZB + 0.14, { ink: 0.02 }); ob(3.5, 0.08, 0.15, '#9aa3ad', 2.2, FY + 1.56, ZB + 0.2);
     if ((Q.get('set') || 'office') === 'office') for (const [x, y, w, c] of [[1.2, 2.8, 1.0, '#e8442a'], [2.6, 2.5, 1.3, '#3d7be0'], [1.5, 2.2, 0.8, '#2fa36b']]) ob(w, 0.05, 0.02, c, x, FY + y, ZB + 0.19, { mat: new THREE.MeshBasicMaterial({ color: c }) });
     { const ck = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.06, 32), tm('#ffffff')); ck.rotation.x = Math.PI / 2; ck.position.set(5.6, FY + 3.2, ZB + 0.15); O.add(ck); const rim = new THREE.Mesh(new THREE.TorusGeometry(0.32, 0.035, 8, 32), tm('#2a1612')); rim.position.copy(ck.position); O.add(rim);
-      for (const [l, a] of [[0.2, 0.6], [0.26, 2.2]]) { const hd = new THREE.Mesh(new THREE.BoxGeometry(0.025, l, 0.01), tm('#2a1612')); hd.geometry.translate(0, l / 2, 0); hd.position.set(5.6, FY + 3.2, ZB + 0.2); hd.rotation.z = -a; O.add(hd); } }
+      for (const [l, a] of [[0.2, 0.6], [0.26, 2.2]]) { const hd = new THREE.Mesh(new THREE.BoxGeometry(0.025, l, 0.01), tm('#2a1612')); hd.geometry.translate(0, l / 2, 0); hd.position.set(5.6, FY + 3.2, ZB + 0.2); hd.rotation.z = -a; hd.userData.hand = l; O.add(hd); } }
     ob(1.1, 1.5, 0.04, '#f2cf2c', 7.3, FY + 2.4, ZB + 0.14, { ink: 0.02 });
     // furniture: Kenney Furniture Kit + KayKit Furniture Bits (both CC0), see FURN below
     ob(0.5, 1.1, 0.5, '#f2f0ea', 8.4, FY + 0.55, Z + 1.5, { ink: 0.02 }); { const jug = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.5, 16), new THREE.MeshBasicMaterial({ color: '#9fd3f5', transparent: true, opacity: 0.85 })); jug.position.set(8.4, FY + 1.35, Z + 1.5); O.add(jug); }
     hemi.color.set('#fff3e2'); hemi.groundColor.set('#b89a78');
     { const { RoomEnvironment } = await import('three/addons/environments/RoomEnvironment.js'); const pm = new THREE.PMREMGenerator(renderer); scene.environment = pm.fromScene(new RoomEnvironment(), 0.04).texture; scene.environmentIntensity = 0.55; }
-    for (const x of [-5, 0, 5]) { const pl = new THREE.PointLight('#ffe2b8', 6, 9, 1.6); pl.position.set(x, FY + 3.6, Z - 1); scene.add(pl); }
+    for (const x of [-5, 0, 5]) { const pl = new THREE.PointLight('#ffe2b8', 6, 9, 1.6); pl.position.set(x, FY + 3.6, Z - 1); pl.userData.ceiling = true; scene.add(pl); }
     await post.addAO();
     // ---- real furniture (CC0): Kenney Furniture Kit 2.0 (.glb) + KayKit Furniture Bits 1.0 (.gltf, one texture atlas) ----
     const { GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js'); const GL = new GLTFLoader(), CACHE = {};
@@ -634,6 +639,7 @@ if (Q.has('viewer')) { if (Q.has('skit')) window.ready = false;   // the skit wa
       obj.name = name; obj.scale.setScalar(k); obj.rotation.y = ry; obj.position.set(x, (o.y ?? FY), z); O.add(obj);
       if (kit === 'polyhaven') { obj.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(obj), c2 = bb.getCenter(V(0, 0, 0)); obj.position.x += x - c2.x; obj.position.z += z - c2.z; obj.position.y += (o.y ?? FY) - bb.min.y; }   // footprint centred on (x, z), sitting on the floor/desk
       return obj; };
+    PUT = put;
     const SET = Q.get('set') || 'office', ZD = Z - 2.9;
     if (SET === 'office') {   // Poly Haven CC0 scans (desks, chairs, lamps, plants, shelves) + Kenney monitors
       for (const [i, x] of [-6.2, -2.1, 2.1, 6.2].entries()) { await put('polyhaven', 'metal_office_desk', x, ZD, 0); await put('kenney', i === 1 ? 'laptop' : 'computerScreen', x, ZD, 0, { y: FY + 0.66 });
@@ -694,7 +700,9 @@ if (Q.has('viewer')) { if (Q.has('skit')) window.ready = false;   // the skit wa
     ALL.forEach((c) => SR.updateLimbs(c)); if (!OFFICE) W.update(t, ctl.target);
     const f = ctl.target.clone(); sun.target.position.copy(f); sun.position.copy(f).addScaledVector(SUNDIR, 60); const sc = sun.shadow.camera; sc.left = sc.bottom = -8; sc.right = sc.top = 8; sc.near = 1; sc.far = 140; sc.updateProjectionMatrix();
     post.bokeh.enabled = false; U.uTime.value = t; ctl.update(); post.render(); requestAnimationFrame(loop); };
-  if (!Q.has('skit')) loop(); else {
+  if (Q.has('study')) { ui.style.display = 'none'; const { runStudy } = await import('./study.js');
+    await runStudy({ THREE, Q, WW, HH, scene, renderer, camera, canvas, post, U, hemi, sun, SUNDIR, SR, OUTF, thua, chief, ti, ex, ALL, base, FACES, face, place, idle, arm, leg, hips, headTurn, yawTo, laughPose, waveArms, Lw, dirW, LEFT, headC, look, resetScene, setLook, O: OFF_O, put: PUT, FY, Z, clamp, ease, eio, lerp, V, vl });
+  } else if (!Q.has('skit')) loop(); else {
   // ---------- 10 s skit "Trả lời tất cả" (owner 2026-11-10: "làm thử 1 kịch bản nhẹ nhẹ 10s") ----------
   ui.style.display = 'none';
   const O = OFF_O, VEST = OUTF[1], ZD = Z - 2.9, DESKS = [-6.2, -2.1, 2.1, 6.2], ME = 2.1, CO = [[thua, -6.2], [ti, -2.1], [chief, 6.2]];

@@ -42,6 +42,24 @@ XQ="&viewer=1&skit=1" node render.cjs out/skit.mp4 1080 1920 30   # the 10 s off
 ```
 Then in Claude Code say: *"Use the 3D animated shorts skill and make a 40 s short about …"*.
 
+## Example: "Your brain at 2 AM" (study short)
+A ~50 s explainer on what staying up until 2 AM studying does to your brain: adenosine and sleep pressure, why coffee only masks it, 19 hours awake ≈ 0.05% blood alcohol (Williamson & Feyer, 2000), and how deep sleep moves new memories from the hippocampus to the cortex. It is built on the same engine: a night dorm (`set=home`), an exam room (`set=office`), and animated science panels drawn over the 3D frame.
+
+| Path | What it is |
+|---|---|
+| `shorts/study-2am/script.json` | Lines, speakers and the shot note for each line |
+| `engine/study.js` | Props, night lighting, shots and the science panels (`index.html?viewer=1&study=1&set=home`) |
+| `tools/tts_piper.py` | Local voice with [Piper](https://github.com/OHF-Voice/piper1-gpl) (no API key), word timings from its phoneme alignments |
+| `tools/render-study.sh`, `tools/finish-study.sh` | Render the three parts on their sets, then add the voice and the word captions |
+
+```bash
+python3 -m venv ~/piper && ~/piper/bin/pip install piper-tts onnx
+(cd ~/piper && bin/python -m piper.download_voices en_US-ryan-high en_US-joe-medium en_US-amy-medium)
+cd shorts/study-2am && ~/piper/bin/python ../../tools/tts_piper.py --voices ~/piper --speed 1.08 && cp timing.json ../../engine/film/study_timing.json
+cd ../.. && bash tools/render-study.sh 720 1280 && bash tools/finish-study.sh   # -> shorts/study-2am/final.mp4
+```
+On Linux without a GPU, render.cjs uses SwiftShader (about 4 s per 720p frame), so the finish step upscales to 1080x1920.
+
 ## Credits
 - Workflow and audio tools: [mromidev/claude-animated-shorts](https://github.com/mromidev/claude-animated-shorts) (MIT)
 - Style reference: the RicksClips YouTube channel (style only, not affiliated)
